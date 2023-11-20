@@ -1,0 +1,700 @@
+﻿
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics.Contracts;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+
+using YambApp.Model;
+using YambApp.Repository;
+using YambApp.Service;
+
+namespace YambApp.ViewModel
+{
+    public class MainWindowViewModel : INotifyPropertyChanged
+    {
+        
+
+        private static IBestChoiceAlgorithams bestChoiceAlgorithams;
+        private static IYambTableGenerator yambTableGenerator;
+        private static IRandomDiceGenerator randomDiceGenerator;
+        private static IScore score;
+        private static ISumRules sumRules;
+        private static IStyleOfBestChoiceAlgorithams styleOfBestChoiceAlgorithams;
+        private static IPlayerService playerService;
+        private static IEndOfGameCheck endOfGameCheck;
+
+        IDataGridWrapper dataGridWrapper;
+        public ObservableCollection<YambCategory> YambCategories { get; set; }
+        public int Scores { get; set; }
+        public List<Dices> Dices { get; set; }
+        public ICommand RollCommand { get; set; }
+        public ICommand HoldDiceCommand { get; set; } 
+        public ICommand CellClickCommand { get; private set; }
+
+        public ICommand GridLoadedCommand { get; set; }
+
+
+        private bool dice1Holded = false;
+        private bool dice2Holded = false;
+        private bool dice3Holded = false;
+        private bool dice4Holded = false;
+        private bool dice5Holded = false;
+       
+        private int turnNo;
+        private bool locked = false;
+        private bool previewLook = false;
+        private TextBlock lockedTextBlock;
+        private DataGridCell lockedCell;
+     
+       
+        private bool gameWithBonus = false;
+        private bool validInput = true;
+
+        public DataGrid ScoreGrid { get; set; }
+
+        Dictionary<int, List<int>> freeFieldsIndexes =new Dictionary<int, List<int>>();
+        Dictionary<Dictionary<int, int>, int> indexesValue = new Dictionary<Dictionary<int, int>, int>();
+
+
+
+
+        static double screenWidth = SystemParameters.PrimaryScreenWidth;
+
+        private Func<List<int>, int>[] actions = new Func<List<int>, int>[8];
+        private Func<List<int>, bool, int>[] actionsWithBoolean = new Func<List<int>, bool, int>[12];
+
+        private Action[] imageSource = new Action[7];
+
+        private string imageSourceString;
+
+        
+        public MainWindowViewModel(bool bonus,DataGrid scoreGrid)
+        {
+   
+            randomDiceGenerator = new RandomDiceGenerator();           
+            randomDiceGenerator= new RandomDiceGenerator();
+            dataGridWrapper = new DataGridWrapper();
+            sumRules = new SumRules();
+            bestChoiceAlgorithams = new BestChoiceAlgorithams(dataGridWrapper, sumRules);
+            yambTableGenerator = new YambTableGenerator();
+            score = new Score(dataGridWrapper);
+           
+            styleOfBestChoiceAlgorithams = new StyleOfBestChoiceAlgorithams();
+            playerService= new PlayerService();
+            endOfGameCheck= new EndOfGameCheck();
+
+            YambCategories = new ObservableCollection<YambCategory>(yambTableGenerator.GetRows());
+
+            Scores = 0;
+
+           
+
+
+            ScoreGrid = scoreGrid;
+            ScoreGrid.ItemsSource = YambCategories;
+            ScoreGrid.Width = screenWidth / 2;
+
+            RollCommand = new RelayCommand(Roll);
+            HoldDiceCommand = new RelayCommand(HoldDice);
+            CellClickCommand = new RelayCommandMouseArg<EventTuple>(ClickCell);
+            GridLoadedCommand = new RelayCommand(GridLoaded);
+
+            gameWithBonus = bonus;
+
+            Func<List<int>, int> sumOnes = sumRules.SumOnes;
+            Func<List<int>, int> sumTwos = sumRules.SumTwos;
+            Func<List<int>, int> sumThrees = sumRules.SumThrees;
+            Func<List<int>, int> sumFours = sumRules.SumFours;
+            Func<List<int>, int> sumFives = sumRules.SumFives;
+            Func<List<int>, int> sumSixes = sumRules.SumSixes;
+            Func<List<int>, int> sumMax = sumRules.SumDices;
+            Func<List<int>, int> sumMin = sumRules.SumDices;
+
+            Func<List<int>, bool, int> sumStraight = sumRules.SumStraight;
+            Func<List<int>, bool, int> sumFullHouse = sumRules.SumFullHouse;
+            Func<List<int>, bool, int> sumPocker = sumRules.SumPocker;
+            Func<List<int>, bool, int> sumYamb = sumRules.SumYamb;
+
+
+            actions[0] = sumOnes;  //write sum of dices with value 1 on appropriate row
+            actions[1] = sumTwos;  //write sum of dices with value 2 on appropriate row
+            actions[2] = sumThrees;  //write sum of dices with value 3 on appropriate row
+            actions[3] = sumFours; //write sum of dices with value 4 on appropriate row
+            actions[4] = sumFives; //write sum of dices with value 5 on appropriate row
+            actions[5] = sumSixes; //write sum of dices with value 6 on appropriate row
+            actions[6] = sumMax; //write sum of dices on row max 
+            actions[7] = sumMin;//write sum of dices on row min 
+            actionsWithBoolean[8] = sumStraight;  //write sum of dices (with bonus optional) if you have straight
+            actionsWithBoolean[9] = sumFullHouse; //write sum of dices (with bonus optional) if you have full house
+            actionsWithBoolean[10] = sumPocker; //write sum of dices (with bonus optional) if you have pocker
+            actionsWithBoolean[11] = sumYamb; //write sum of dices (with bonus optional) if you have straight
+
+
+            imageSource[1] = () => imageSourceString = "/YambApp;component/Image/diceOne.png";
+            imageSource[2] = () => imageSourceString = "/YambApp;component/Image/diceTwo.png";
+            imageSource[3] = () => imageSourceString = "/YambApp;component/Image/diceThree.png";
+            imageSource[4] = () => imageSourceString = "/YambApp;component/Image/diceFour.png";
+            imageSource[5] = () => imageSourceString = "/YambApp;component/Image/diceFive.png";
+            imageSource[6] = () => imageSourceString = "/YambApp;component/Image/diceSix.png";
+
+            turnNo = 1;
+
+            Dices = randomDiceGenerator.RollDices();
+            Dice1Value = Dices[0].Value.ToString();
+            imageSource[Dices[0].Value].Invoke();
+            FirstDiceImage = imageSourceString;
+            Dice2Value = Dices[1].Value.ToString();
+            imageSource[Dices[1].Value].Invoke();
+            SecondDiceImage = imageSourceString;
+            Dice3Value = Dices[2].Value.ToString();
+            imageSource[Dices[2].Value].Invoke();
+            ThirdDiceImage = imageSourceString;
+            Dice4Value = Dices[3].Value.ToString();
+            imageSource[Dices[3].Value].Invoke();
+            FourthDiceImage = imageSourceString;
+            Dice5Value = Dices[4].Value.ToString();
+            imageSource[Dices[4].Value].Invoke();
+            FifthDiceImage = imageSourceString;
+            Dice1Background = Brushes.Black;
+            Dice2Background = Brushes.Black;
+            Dice3Background = Brushes.Black;
+            Dice4Background = Brushes.Black;
+            Dice5Background = Brushes.Black;
+
+        }
+
+
+ 
+
+        private string dice1Value;
+        public string Dice1Value
+        {
+            get { return dice1Value; }
+            set
+            {
+                dice1Value = value;
+                OnPropertyChanged(nameof(Dice1Value));
+            }
+        }
+        private string dice2Value;
+        public string Dice2Value
+        {
+            get { return dice2Value; }
+            set
+            {
+                dice2Value = value;
+                OnPropertyChanged(nameof(Dice2Value));
+            }
+        }
+        private string dice3Value;
+        public string Dice3Value
+        {
+            get { return dice3Value; }
+            set
+            {
+                dice3Value = value;
+                OnPropertyChanged(nameof(Dice3Value));
+            }
+        }
+        private string dice4Value;
+        public string Dice4Value
+        {
+            get { return dice4Value; }
+            set
+            {
+                dice4Value = value;
+                OnPropertyChanged(nameof(Dice4Value));
+            }
+        }
+        private string dice5Value;
+        public string Dice5Value
+        {
+            get { return dice5Value; }
+            set
+            {
+                dice5Value = value;
+                OnPropertyChanged(nameof(Dice5Value));
+            }
+        }
+
+
+
+        private SolidColorBrush dice1BackGround;
+        public SolidColorBrush Dice1Background
+        {
+            get { return dice1BackGround; }
+            set
+            {
+                dice1BackGround = value;
+                OnPropertyChanged(nameof(Dice1Background));
+            }
+        }
+
+
+        private SolidColorBrush dice2BackGround;
+        public SolidColorBrush Dice2Background
+        {
+            get { return dice2BackGround; }
+            set
+            {
+                dice2BackGround = value;
+                OnPropertyChanged(nameof(Dice2Background));
+            }
+        }
+
+
+        private SolidColorBrush dice3BackGround;
+        public SolidColorBrush Dice3Background
+        {
+            get { return dice3BackGround; }
+            set
+            {
+                dice3BackGround = value;
+                OnPropertyChanged(nameof(Dice3Background));
+            }
+        }
+
+
+        private SolidColorBrush dice4BackGround;
+        public SolidColorBrush Dice4Background
+        {
+            get { return dice4BackGround; }
+            set
+            {
+                dice4BackGround = value;
+                OnPropertyChanged(nameof(Dice4Background));
+            }
+        }
+
+
+        private SolidColorBrush dice5BackGround;
+        public SolidColorBrush Dice5Background
+        {
+            get { return dice5BackGround; }
+            set
+            {
+                dice5BackGround = value;
+                OnPropertyChanged(nameof(Dice5Background));
+            }
+        }
+        
+        private string scoreValue;
+        public string ScoreValue
+        {
+            get { return scoreValue; }
+            set
+            {
+                scoreValue = value;
+                OnPropertyChanged(nameof(ScoreValue));
+            }
+        }
+
+
+        private string firsDiceImage;
+        public string FirstDiceImage
+        {
+            get { return firsDiceImage; }
+            set
+            {
+                firsDiceImage = value;
+                OnPropertyChanged(nameof(FirstDiceImage));
+            }
+        }
+
+        private string secondDiceImage;
+        public string SecondDiceImage
+        {
+            get { return secondDiceImage; }
+            set
+            {
+                secondDiceImage = value;
+                OnPropertyChanged(nameof(SecondDiceImage));
+            }
+        }
+
+        private string thirdDiceImage;
+        public string ThirdDiceImage
+        {
+            get { return thirdDiceImage; }
+            set
+            {
+                thirdDiceImage = value;
+                OnPropertyChanged(nameof(ThirdDiceImage));
+            }
+        }
+
+        private string fourthiceImage;
+        public string FourthDiceImage
+        {
+            get { return fourthiceImage; }
+            set
+            {
+                fourthiceImage = value;
+                OnPropertyChanged(nameof(FourthDiceImage));
+            }
+        }
+
+        private string fifthDiceImage;
+        public string FifthDiceImage
+        {
+            get { return fifthDiceImage; }
+            set
+            {
+                fifthDiceImage = value;
+                OnPropertyChanged(nameof(FifthDiceImage));
+            }
+        }
+
+
+
+
+
+
+
+        private void Roll(object obj)
+        {
+            if (endOfGameCheck.EndOfGame(ScoreGrid, indexesValue)) return;
+            if (turnNo == 3)
+            {
+                dice1Holded = false;
+                dice2Holded = false;
+                dice3Holded = false;
+                dice4Holded = false;
+                dice5Holded = false;
+                return;
+            }
+
+            ++turnNo;
+            Dices = randomDiceGenerator.RollDices();
+
+            if (!dice1Holded) 
+            {
+                Dice1Value = Dices[0].Value.ToString();
+                imageSource[Dices[0].Value].Invoke();
+                FirstDiceImage = imageSourceString;
+            }
+            if (!dice2Holded)
+            {
+                Dice2Value = Dices[1].Value.ToString();
+                imageSource[Dices[1].Value].Invoke();
+                SecondDiceImage = imageSourceString;
+            }
+            if (!dice3Holded)
+            {
+                Dice3Value = Dices[2].Value.ToString();
+                imageSource[Dices[2].Value].Invoke();
+                ThirdDiceImage = imageSourceString;
+            }
+            if (!dice4Holded)
+            {
+                Dice4Value = Dices[3].Value.ToString();
+                imageSource[Dices[3].Value].Invoke();
+                FourthDiceImage = imageSourceString;
+            }
+            if (!dice5Holded)
+            {
+                Dice5Value = Dices[4].Value.ToString();
+                imageSource[Dices[4].Value].Invoke();
+                FifthDiceImage = imageSourceString;
+            }
+
+                if (turnNo > 1)
+            {
+            
+                foreach (var dic in indexesValue)
+                {
+                    foreach (var indexes in dic.Key)
+                    {
+
+                        TextBlock style = ScoreGrid.Columns[indexes.Value].GetCellContent(ScoreGrid.Items[indexes.Key]) as TextBlock;
+                        style.Background = Brushes.Transparent;
+                        style.Text = string.Empty;
+                    }
+                }
+
+               
+            }
+
+            styleOfBestChoiceAlgorithams.StyleOfFreeFields(ScoreGrid, turnNo, locked, lockedCell, GetDices(), gameWithBonus);
+
+          
+        }
+
+        private void HoldDice(object obj)
+        {
+            int diceNumber = int.Parse(obj.ToString());
+
+            
+            switch (diceNumber)
+            {
+                case 1:
+                    dice1Holded = !dice1Holded;
+                    Dice1Background = dice1Holded ? Brushes.SkyBlue : Brushes.Black;                    
+                    break;
+                case 2:
+                    dice2Holded = !dice2Holded;
+                    Dice2Background = dice2Holded ? Brushes.SkyBlue : Brushes.Black;
+                    break;
+                case 3:
+                    dice3Holded = !dice3Holded;
+                    Dice3Background = dice3Holded ? Brushes.SkyBlue : Brushes.Black;
+                    break;
+                case 4:
+                    dice4Holded = !dice4Holded;
+                    Dice4Background = dice4Holded ? Brushes.SkyBlue : Brushes.Black;
+                    break;
+                case 5:
+                    dice5Holded = !dice5Holded;
+                    Dice5Background = dice5Holded ? Brushes.SkyBlue : Brushes.Black;
+                    break;
+            }
+        }
+
+        
+
+
+
+        private void ClickCell(EventTuple T)
+        {
+            validInput = true; //initial value for validation
+            int rowIndex = -1;
+            int columnIndex = -1;
+
+            if (T.Sender is DataGridCell cell && T.MouseEventArgs.Source is TextBlock textBlock)
+            {
+
+
+                    //get index of field
+                    DataGridRow r = DataGridRow.GetRowContainingElement(cell);
+                    rowIndex = r.GetIndex();
+                    columnIndex = cell.Column.DisplayIndex;
+                    Dictionary <int,int> key = new Dictionary<int,int>();
+
+                   if (textBlock.Background != Brushes.Aquamarine && textBlock.Background != Brushes.DimGray) return;
+               
+                    indexesValue.Remove(key);
+                    foreach (var dic in indexesValue)
+                    {
+                        foreach (var indexes in dic.Key)
+                        {
+                            //remove all proposal for input 
+                            TextBlock style = ScoreGrid.Columns[indexes.Value].GetCellContent(ScoreGrid.Items[indexes.Key]) as TextBlock;
+                            style.Background = Brushes.Transparent;
+                            style.Text = string.Empty;
+                       
+                        }
+                    }
+
+
+                    //if field is locked
+                    if (locked)
+                    {
+                        if (!cell.Column.Header.ToString().Equals("Lock")) return; //check if right column is clicked 
+                        if (cell != lockedCell) return; //check if right cell is clicked               
+                                      
+                       textBlock.Text = (rowIndex >= 0 && rowIndex <= 7)? actions[rowIndex].Invoke(GetDices()).ToString() : actionsWithBoolean[rowIndex].Invoke(GetDices(), gameWithBonus).ToString();
+
+                        //unlock field
+                        textBlock.Background = Brushes.Transparent;
+                        locked = false;
+
+                        BackDicesToDefault();
+
+                        FirstRoleOfTurn();
+
+                        ScoreValue = score.ScoreValue(ScoreGrid).ToString();
+
+                        indexesValue= styleOfBestChoiceAlgorithams.StyleOfFreeFields(ScoreGrid, turnNo, locked, lockedCell, GetDices(), gameWithBonus);
+
+                        EndOfGame();
+
+
+                        return;
+
+                    }
+                            
+
+                    //rule for down column
+                    if (cell.Column.Header.ToString() == "Down")
+                    {
+                        RuleForDownColumn(rowIndex, columnIndex);                                               
+                    }
+
+                    // rule for Up column
+                    if (cell.Column.Header.ToString() == "Up")
+                    {
+                        RuleForUpColumn(rowIndex, columnIndex);                     
+                    }
+
+                    //lock cell you want
+                    if (cell.Column.Header.ToString() == "Lock")
+                    {
+                        RuleForLockColumn(rowIndex, columnIndex, cell);
+                        return;                        
+                    }
+
+                     
+                    //if field on yamb table properly selected write appropriate value
+                    if (string.IsNullOrEmpty(textBlock.Text) && validInput)
+                    {
+
+                        textBlock.Text = (rowIndex >= 0 && rowIndex <= 7)? actions[rowIndex].Invoke(GetDices()).ToString() : actionsWithBoolean[rowIndex].Invoke(GetDices(), gameWithBonus).ToString();
+
+                        BackDicesToDefault();
+
+                        FirstRoleOfTurn();
+
+                        ScoreValue = score.ScoreValue(ScoreGrid).ToString();
+
+
+                        indexesValue= styleOfBestChoiceAlgorithams.StyleOfFreeFields(ScoreGrid, turnNo, locked, lockedCell, GetDices(), gameWithBonus);
+
+                        EndOfGame();
+
+                        textBlock.Background = Brushes.Transparent;
+
+                    }               
+            }
+        }
+
+        //get value of all dices in list and sort it 
+        private List<int> GetDices()
+        {
+            List<int> dices = new List<int>(5);
+            dices.Add(int.Parse(Dice1Value));
+            dices.Add(int.Parse(Dice2Value));
+            dices.Add(int.Parse(Dice3Value));
+            dices.Add(int.Parse(Dice4Value));
+            dices.Add(int.Parse(Dice5Value));
+
+            dices.Sort();
+
+
+
+            return dices;
+        }
+
+        private void BackDicesToDefault()
+        {
+            //unhold all dices because turn is over 
+            dice1Holded = false;
+            dice2Holded = false;
+            dice3Holded = false;
+            dice4Holded = false;
+            dice5Holded = false;
+
+            Dice1Background = Brushes.Black;
+            Dice2Background = Brushes.Black;
+            Dice3Background = Brushes.Black;
+            Dice4Background = Brushes.Black;
+            Dice5Background = Brushes.Black;
+        }
+
+        private void FirstRoleOfTurn()
+        {
+            //first roll on next turn
+            Dices = randomDiceGenerator.RollDices();
+            Dice1Value = Dices[0].Value.ToString();
+            Dice2Value = Dices[1].Value.ToString();
+            Dice3Value = Dices[2].Value.ToString();
+            Dice4Value = Dices[3].Value.ToString();
+            Dice5Value = Dices[4].Value.ToString();
+            imageSource[Dices[0].Value].Invoke();
+            FirstDiceImage = imageSourceString;
+            imageSource[Dices[1].Value].Invoke();
+            SecondDiceImage = imageSourceString;
+            imageSource[Dices[2].Value].Invoke();
+            ThirdDiceImage = imageSourceString;
+            imageSource[Dices[3].Value].Invoke();
+            FourthDiceImage = imageSourceString;
+            imageSource[Dices[4].Value].Invoke();
+            FifthDiceImage = imageSourceString;
+            turnNo = 1;
+        }
+
+
+       
+
+
+        private void RuleForDownColumn(int rowIndex,int columnIndex) 
+        {
+            if (rowIndex > 0)
+            {
+                
+                TextBlock x = ScoreGrid.Columns[columnIndex].GetCellContent(ScoreGrid.Items[rowIndex - 1]) as TextBlock;
+                if (string.IsNullOrEmpty(x.Text))
+                {
+                    MessageBox.Show("Cell above is empty");
+                    indexesValue = styleOfBestChoiceAlgorithams.StyleOfFreeFields(ScoreGrid, turnNo, locked, lockedCell, GetDices(), gameWithBonus);
+                    validInput = false;
+                }
+
+            }
+        }
+        private void RuleForUpColumn(int rowIndex, int columnIndex) 
+        {
+            if (rowIndex < ScoreGrid.Items.Count - 1)
+            {
+                
+                TextBlock x = ScoreGrid.Columns[columnIndex].GetCellContent(ScoreGrid.Items[rowIndex + 1]) as TextBlock;
+                if (string.IsNullOrEmpty(x.Text))
+                {
+                    MessageBox.Show("Cell under is empty");
+                    indexesValue = styleOfBestChoiceAlgorithams.StyleOfFreeFields(ScoreGrid, turnNo, locked, lockedCell, GetDices(), gameWithBonus);
+                    validInput = false;
+                }
+
+            }
+        }
+        private void RuleForLockColumn(int rowIndex, int columnIndex, DataGridCell cell)
+        {
+            if (turnNo > 1) { indexesValue = styleOfBestChoiceAlgorithams.StyleOfFreeFields(ScoreGrid, turnNo, locked, lockedCell, GetDices(), gameWithBonus); return; }
+            lockedTextBlock = ScoreGrid.Columns[columnIndex].GetCellContent(ScoreGrid.Items[rowIndex]) as TextBlock;
+            if (!string.IsNullOrEmpty(lockedTextBlock.Text)) { indexesValue = styleOfBestChoiceAlgorithams.StyleOfFreeFields(ScoreGrid, turnNo, locked, lockedCell, GetDices(), gameWithBonus); return; }
+            lockedTextBlock.Background = Brushes.DimGray;
+            lockedCell = cell;
+            locked = true;
+            MessageBox.Show("Cell is locked");
+           
+            return;
+        }
+
+        private void EndOfGame()
+        {
+            if (endOfGameCheck.EndOfGame(ScoreGrid,indexesValue))
+            {
+                Random random = new Random();
+                int randomNO = random.Next(1,1000000);
+                int scoreValueInt = score.ScoreValue(ScoreGrid);
+                Player player = new Player("Guest"+randomNO, scoreValueInt);
+                playerService.Create(player);
+
+                PlayersScoresWindow allPLayers = new PlayersScoresWindow();
+                
+                allPLayers.Show();
+            }
+        }
+
+        private void GridLoaded(object obj)
+        {
+           indexesValue = styleOfBestChoiceAlgorithams.StyleOfFreeFields(ScoreGrid,turnNo,locked,lockedCell,GetDices(),gameWithBonus);        
+
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+}

@@ -12,6 +12,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
+using YambApp.ViewModel;
+
 namespace YambApp
 {
     /// <summary>
@@ -20,35 +22,15 @@ namespace YambApp
     
     public partial class StartGameWindow : Window
     {
-        private bool withBonus = false;
-
        
         public StartGameWindow()
         {
             InitializeComponent();
-            DataContext = this;
+           
+            DataContext = new StartGameWindowViewModel();
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
           
         }
-
-        private void WithBonus_Click(object sender, RoutedEventArgs e)
-        {
-            withBonus = true;
-            MainWindow main = new MainWindow(withBonus);
-            main.Show();
-            this.Close();
-
-            
-        }
-
-        private void WithOutBonus_Click(object sender, RoutedEventArgs e)
-        {
-            withBonus = false;
-            MainWindow main = new MainWindow(withBonus);
-            main.Show();
-            this.Close();
-        }
-
-  
+ 
     }
 }

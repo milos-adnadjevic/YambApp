@@ -1,20 +1,30 @@
-﻿ <Window x:Class="YambApp.MainWindow"
+﻿<Window x:Class="YambApp.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:YambApp"
+        xmlns:viewmodel="clr-namespace:YambApp.ViewModel" d:DataContext="{d:DesignInstance Type=viewmodel:MainWindowViewModel}"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         mc:Ignorable="d"   
         Height="Auto"
         Width="Auto" 
         WindowState="Maximized"
-        Title="MainWindow"  >
+        Title="MainWindow" >
+
+
     <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Hidden">
-        
-  
-       <Grid>
+
+
+        <Grid >
             <ScrollViewer>
-                <DataGrid x:Name="scoreGrid" AutoGenerateColumns="False" CanUserAddRows="False" HorizontalAlignment="Left" IsReadOnly="True" CanUserSortColumns="False" CanUserReorderColumns="False" CanUserResizeColumns="False"  CanUserResizeRows="False" CanUserDeleteRows="False" RowHeight="65" Margin="0,0,0,184" VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="35" Loaded="scoreGrid_Loaded">
+                <DataGrid x:Name="scoreGrid" AutoGenerateColumns="False" CanUserAddRows="False" HorizontalAlignment="Left" IsReadOnly="True" CanUserSortColumns="False" CanUserReorderColumns="False" CanUserResizeColumns="False"  CanUserResizeRows="False" CanUserDeleteRows="False" RowHeight="65" Margin="0,0,0,184" VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="35"  AutomationProperties.AutomationId="scoreGrid">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="Loaded">
+                            <i:InvokeCommandAction Command="{Binding GridLoadedCommand}" />
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+
                     <DataGrid.Columns  >
                         <DataGridTextColumn Header="" Binding="{Binding CategoryName}" IsReadOnly="True" Width="*" />
                         <DataGridTextColumn Header="Down" Binding="{Binding Down}" Width="*" />
@@ -23,9 +33,10 @@
                         <DataGridTextColumn Header="Lock" Binding="{Binding Lock}" Width="*"/>
                     </DataGrid.Columns>
 
+
                     <DataGrid.CellStyle>
                         <Style TargetType="DataGridCell" >
-                            <EventSetter Event="PreviewMouseDown" Handler="DataGridCell_PreviewMouseDown" />
+                            <EventSetter Event="PreviewMouseDown" Handler="DataGridCell_PreviewMouseDown"/>
                             <Style.Triggers>
                                 <Trigger Property="IsSelected" Value="True">
                                     <Setter Property="Background" Value="Transparent" />
@@ -35,26 +46,53 @@
                             </Style.Triggers>
 
                         </Style>
-                      
+
                     </DataGrid.CellStyle>
                 </DataGrid>
             </ScrollViewer>
 
-                    <Label  HorizontalAlignment="Left" Margin="253,880,0,-6" Width="147" FontSize="35" >Score:</Label>
-            <TextBox HorizontalAlignment="Left" Margin="400,880,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"  x:Name="Scores" IsReadOnly="True" Height="65"  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="35"/>
+            <Label  HorizontalAlignment="Left" Margin="253,880,0,-6" Width="147" FontSize="35" >Score:</Label>
+            <TextBox Text="{Binding ScoreValue, Mode=TwoWay}" HorizontalAlignment="Left" Margin="400,880,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"  x:Name="Scores" IsReadOnly="True" Height="65"  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="35"/>
 
-            <TextBox HorizontalAlignment="Left" Margin="1000,500,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"  x:Name="Dice1" IsReadOnly="True" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
-            <TextBox HorizontalAlignment="Left" Margin="1110,500,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"  x:Name="Dice2" IsReadOnly="True" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
-            <TextBox HorizontalAlignment="Left" Margin="1220,500,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"  x:Name="Dice3" IsReadOnly="True" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
-            <TextBox HorizontalAlignment="Left" Margin="1330,500,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"  x:Name="Dice4" IsReadOnly="True" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
-            <TextBox HorizontalAlignment="Left" Margin="1440,500,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"  x:Name="Dice5" IsReadOnly="True" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
-            <Button Content="Roll dice" HorizontalAlignment="Left" Margin="1550,500,0,0"  VerticalAlignment="Top" Width="180"  x:Name="Roll" Click="Roll_Click" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"></Button>
+            <TextBox Text="{Binding Dice1Value, Mode=TwoWay}" Background="{Binding Dice1Background, Mode=TwoWay}"  HorizontalAlignment="Left" Margin="1000,500,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"  x:Name="Dice1" IsReadOnly="True" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+            <TextBlock HorizontalAlignment="Left" Margin="1000,500,0,0"  VerticalAlignment="Top" Width="100"    Height="65" >
+                <Border BorderThickness="3">
+                 <Image Source="{Binding FirstDiceImage, Mode=TwoWay}"  Stretch="Fill" />
+                </Border>
+            </TextBlock>
+           
 
-            <Button Content="Hold Dice 1" HorizontalAlignment="Left" Margin="1000,570,0,0"  VerticalAlignment="Top" Width="100"  x:Name="HoldDice1" Click="HoldDice1_Click"></Button>
-            <Button Content="Hold Dice 2" HorizontalAlignment="Left" Margin="1110,570,0,0"  VerticalAlignment="Top" Width="100"  x:Name="HoldDice2" Click="HoldDice2_Click"></Button>
-            <Button Content="Hold Dice 3" HorizontalAlignment="Left" Margin="1220,570,0,0"  VerticalAlignment="Top" Width="100"  x:Name="HoldDice3" Click="HoldDice3_Click"></Button>
-            <Button Content="Hold Dice 4" HorizontalAlignment="Left" Margin="1330,570,0,0"  VerticalAlignment="Top" Width="100"  x:Name="HoldDice4" Click="HoldDice4_Click"></Button>
-            <Button Content="Hold Dice 5" HorizontalAlignment="Left" Margin="1440,570,0,0"  VerticalAlignment="Top" Width="100"  x:Name="HoldDice5" Click="HoldDice5_Click"></Button>
+            <TextBox Text="{Binding Dice2Value, Mode=TwoWay}" Background="{Binding Dice2Background, Mode=TwoWay}"  HorizontalAlignment="Left" Margin="1110,500,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"  x:Name="Dice2" IsReadOnly="True" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+            <TextBlock HorizontalAlignment="Left" Margin="1110,500,0,0"  VerticalAlignment="Top" Width="100"    Height="65" >
+                <Border BorderThickness="3">
+                 <Image Source="{Binding SecondDiceImage, Mode=TwoWay}"  Stretch="Fill" />
+                </Border>
+            </TextBlock>
+            <TextBox Text="{Binding Dice3Value, Mode=TwoWay}" Background="{Binding Dice3Background, Mode=TwoWay}"  HorizontalAlignment="Left" Margin="1220,500,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"  x:Name="Dice3" IsReadOnly="True" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+            <TextBlock HorizontalAlignment="Left" Margin="1220,500,0,0"  VerticalAlignment="Top" Width="100"    Height="65" >
+                <Border BorderThickness="3" >
+                 <Image Source="{Binding ThirdDiceImage, Mode=TwoWay}"  Stretch="Fill" />
+                </Border>
+            </TextBlock>
+            <TextBox Text="{Binding Dice4Value, Mode=TwoWay}" Background="{Binding Dice4Background, Mode=TwoWay}"  HorizontalAlignment="Left" Margin="1330,500,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"  x:Name="Dice4" IsReadOnly="True" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+            <TextBlock HorizontalAlignment="Left" Margin="1330,500,0,0"  VerticalAlignment="Top" Width="100"    Height="65" >
+                <Border BorderThickness="3" >
+                 <Image Source="{Binding FourthDiceImage, Mode=TwoWay}"  Stretch="Fill" />
+                </Border>
+            </TextBlock>
+            <TextBox Text="{Binding Dice5Value, Mode=TwoWay}" Background="{Binding Dice5Background, Mode=TwoWay}"  HorizontalAlignment="Left" Margin="1440,500,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"  x:Name="Dice5" IsReadOnly="True" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+            <TextBlock HorizontalAlignment="Left" Margin="1440,500,0,0"  VerticalAlignment="Top" Width="100"    Height="65" >
+                <Border BorderThickness="3">
+                 <Image Source="{Binding FifthDiceImage, Mode=TwoWay}"  Stretch="Fill" />
+                </Border>
+            </TextBlock>
+            <Button Content="Roll dice" HorizontalAlignment="Left" Margin="1550,500,0,0"  VerticalAlignment="Top" Width="180"  x:Name="Roll" Command="{Binding RollCommand}" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"></Button>
+
+            <Button Command="{Binding HoldDiceCommand}" CommandParameter="1" Content="Hold Dice 1" HorizontalAlignment="Left" Margin="1000,570,0,0"  VerticalAlignment="Top" Width="100"  x:Name="HoldDice1"></Button>
+            <Button Command="{Binding HoldDiceCommand}" CommandParameter="2" Content="Hold Dice 2" HorizontalAlignment="Left" Margin="1110,570,0,0"  VerticalAlignment="Top" Width="100"  x:Name="HoldDice2"></Button>
+            <Button Command="{Binding HoldDiceCommand}" CommandParameter="3" Content="Hold Dice 3" HorizontalAlignment="Left" Margin="1220,570,0,0"  VerticalAlignment="Top" Width="100"  x:Name="HoldDice3"></Button>
+            <Button Command="{Binding HoldDiceCommand}" CommandParameter="4" Content="Hold Dice 4" HorizontalAlignment="Left" Margin="1330,570,0,0"  VerticalAlignment="Top" Width="100"  x:Name="HoldDice4"></Button>
+            <Button Command="{Binding HoldDiceCommand}" CommandParameter="5" Content="Hold Dice 5" HorizontalAlignment="Left" Margin="1440,570,0,0"  VerticalAlignment="Top" Width="100"  x:Name="HoldDice5"></Button>
 
         </Grid>
 

@@ -4,12 +4,13 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:YambApp"
+        xmlns:viewmodel="clr-namespace:YambApp.ViewModel" d:DataContext="{d:DesignInstance Type=viewmodel:StartGameWindowViewModel}"
         mc:Ignorable="d"
         Title="StartGameWindow" Height="450" Width="800">
     <Grid>
         <Label  HorizontalAlignment="Center" Margin="0,56,0,286" Width="228" FontSize="35" >START GAME:</Label>
-        <Button Content="With bonuses" HorizontalAlignment="Center" Margin="0,153,0,0"  VerticalAlignment="Top" Width="300"  x:Name="WithBonus" Click="WithBonus_Click" Height="64" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"></Button>
-        <Button Content="Without bonuses" HorizontalAlignment="Center" Margin="0,250,0,0"  VerticalAlignment="Top" Width="300"  x:Name="WithOutBonus" Click="WithOutBonus_Click" Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"></Button>
+        <Button Command="{Binding ClickWithBonusCommand}" Content="With bonuses" HorizontalAlignment="Center" Margin="0,153,0,0"  VerticalAlignment="Top" Width="300"  x:Name="WithBonus"  Height="64" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"></Button>
+        <Button Command="{Binding ClickWithOutBonusCommand}" Content="Without bonuses" HorizontalAlignment="Center" Margin="0,250,0,0"  VerticalAlignment="Top" Width="300"  x:Name="WithOutBonus"  Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"></Button>
 
     </Grid>
 </Window>

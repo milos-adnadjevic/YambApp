@@ -8,7 +8,7 @@ using YambApp.Model;
 
 namespace YambApp.Repository
 {
-    public class YambRepository
+    public class YambRepository:IYambRepository
     {
 
         List<YambCategory> yambCategories = new List<YambCategory>

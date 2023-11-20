@@ -24,6 +24,14 @@ namespace YambApp.Model
            // Player2Score = -1;  // -1 indicates the category is not scored yet
         }
 
+        public YambCategory(string categoryName, string up, string free, string down, string @lock) 
+        {
+            Down = down;
+            Free = free;
+            Up = up;
+            Lock = @lock;
+        }
+
         public YambCategory() { }
     }
 }
