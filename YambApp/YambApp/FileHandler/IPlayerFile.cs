@@ -9,8 +9,8 @@ namespace YambApp.FileHandler
 {
     public interface IPlayerFile
     {
-        List<Player> Read();
+        List<User> Read();
 
-        void Save(List<Player> players);
+        void Save(List<User> players);
     }
 }

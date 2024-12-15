@@ -6,11 +6,342 @@
         xmlns:local="clr-namespace:YambApp"
         xmlns:viewmodel="clr-namespace:YambApp.ViewModel" d:DataContext="{d:DesignInstance Type=viewmodel:StartGameWindowViewModel}"
         mc:Ignorable="d"
-        Title="StartGameWindow" Height="450" Width="800">
-    <Grid>
-        <Label  HorizontalAlignment="Center" Margin="0,56,0,286" Width="228" FontSize="35" >START GAME:</Label>
-        <Button Command="{Binding ClickWithBonusCommand}" Content="With bonuses" HorizontalAlignment="Center" Margin="0,153,0,0"  VerticalAlignment="Top" Width="300"  x:Name="WithBonus"  Height="64" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"></Button>
-        <Button Command="{Binding ClickWithOutBonusCommand}" Content="Without bonuses" HorizontalAlignment="Center" Margin="0,250,0,0"  VerticalAlignment="Top" Width="300"  x:Name="WithOutBonus"  Height="65" FontSize="35" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"></Button>
+        Title="Yamb, Jamb - game with dices"
+        Icon="Image/diceIcon.png"    
+        WindowState="Maximized"
+        WindowStyle="SingleBorderWindow"
+        ResizeMode="CanMinimize"
+        WindowStartupLocation="CenterScreen">
+    <Window.Background>
+        <ImageBrush ImageSource="Image/dicesBackground.jpg" Stretch="UniformToFill" />
+    </Window.Background>
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <Style x:Key="CustomSizedRadioButton" TargetType="RadioButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <StackPanel Orientation="Horizontal">
+                            <!-- Text -->
+                            <ContentPresenter VerticalAlignment="Center" Margin="0,0,5,0" />
 
+                            <!-- Radio Button -->
+                            <Border Width="40" Height="40" BorderBrush="Black" BorderThickness="2" CornerRadius="20" 
+                                Background="{TemplateBinding Background}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Ellipse Fill="#FF3B5998"  Visibility="{TemplateBinding IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </Border>
+                        </StackPanel>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Button Content="LOG OUT" 
+                        Grid.Row="1" 
+                        Grid.Column="3"
+                        Height="40"
+                        Width="120"
+                        Background="#FF3B5998" 
+                        Foreground="White" 
+                        FontWeight="Bold"
+                        Command="{Binding LogOutCommand}"                      
+                        Cursor="Hand"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Padding="10"
+                        Margin="0,0,0,0">
+            <Button.Style>
+                <Style TargetType="Button">
+                    <Setter Property="Control.Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" x:Name="border" 
+                                                CornerRadius="10" 
+                                                BorderBrush="Transparent" 
+                                                BorderThickness="0">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <!-- Hover Effect -->
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="border" Property="Background" Value="#FF4D6BAB" />
+                                    </Trigger>
+                                    <!-- Pressed Effect -->
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="border" Property="Background" Value="#FF2A4477" />
+                                        <Setter TargetName="border" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Button.Style>
+        </Button>
+
+        <Label  HorizontalAlignment="Center" Grid.Row="1" Grid.Column="2" Width="Auto" FontSize="35" Content="{Binding WelcomeMessage}" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="3" Grid.Column="2" Margin="0,30,0,0">
+            <!-- Game with Bonus -->
+            <DockPanel LastChildFill="False">
+                <TextBlock Text="Game with bonus" VerticalAlignment="Center" DockPanel.Dock="Left" FontWeight="Bold" FontSize="35"/>
+                <RadioButton IsChecked="{Binding IsGameWithBonus}" GroupName="GameType" VerticalAlignment="Center" Style="{StaticResource CustomSizedRadioButton}" Margin="0,0,20,0"/>
+            </DockPanel>
+
+            <!-- Game without Bonus -->
+            <DockPanel LastChildFill="False">
+                <TextBlock Text="Game without bonus" VerticalAlignment="Center"  DockPanel.Dock="Right" FontWeight="Bold" FontSize="35" />
+                <RadioButton IsChecked="{Binding IsGameWithoutBonus}" GroupName="GameType" VerticalAlignment="Center"  Style="{StaticResource CustomSizedRadioButton}" Margin="20,0,0,0" />
+            </DockPanel>
+        </StackPanel>
+        <Button Content="START GAME" 
+                        Grid.Row="4" 
+                        Grid.Column="2"
+                        Height="40"
+                        Width="120"
+                        Background="#FF3B5998" 
+                        Foreground="White" 
+                        FontWeight="Bold"
+                        Command="{Binding StartGameCommand}"                      
+                        Cursor="Hand"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Padding="10"
+                        Margin="0,30,50,0">
+            <Button.Style>
+                <Style TargetType="Button">
+                    <Setter Property="Control.Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" x:Name="border" 
+                                                CornerRadius="10" 
+                                                BorderBrush="Transparent" 
+                                                BorderThickness="0">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <!-- Hover Effect -->
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="border" Property="Background" Value="#FF4D6BAB" />
+                                    </Trigger>
+                                    <!-- Pressed Effect -->
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="border" Property="Background" Value="#FF2A4477" />
+                                        <Setter TargetName="border" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Button.Style>
+        </Button>
+
+
+
+        <Label  HorizontalAlignment="Center" Grid.Row="5" Grid.Column="1" Width="Auto" FontSize="45" Content="GAME WITH BONUS"   FontWeight="Bold"/>
+
+        <Label  HorizontalAlignment="Center" Grid.Row="6" Grid.Column="1" Width="Auto" FontSize="35" Content="All time best score"   FontWeight="Bold"/>
+        <TextBox HorizontalAlignment="Center" Grid.Row="7" Grid.Column="1" Width="Auto" FontSize="25" Text="{Binding BestScoreGameWithBonus}" IsReadOnly="True" Background="Transparent"/>
+        <Label  HorizontalAlignment="Center" Grid.Row="8" Grid.Column="1" Width="Auto" FontSize="35" Content="All time average score"   FontWeight="Bold"/>
+        <TextBox HorizontalAlignment="Center" Grid.Row="9" Grid.Column="1" Width="Auto" FontSize="25" Text="{Binding AverageScoreGameWithBonus}" IsReadOnly="True" Background="Transparent"/>
+        
+        <Label  HorizontalAlignment="Center" Grid.Row="10" Grid.Column="1" Width="Auto" FontSize="35" Content="Scores table"   FontWeight="Bold"/>
+        <DataGrid x:Name="playersScores" AutoGenerateColumns="False" CanUserAddRows="False" HorizontalAlignment="Center" VerticalAlignment="Top" CanUserSortColumns="False" CanUserReorderColumns="False" CanUserResizeColumns="False"  CanUserResizeRows="False" CanUserDeleteRows="False" RowHeight="30" VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="20" Width="500" ItemsSource="{Binding AllScoresWithBonus}" Grid.Row="11"  Grid.Column="1" LoadingRow="DataGrid_LoadingRow" GridLinesVisibility="Horizontal" IsReadOnly="True" Height="120"  >
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="1*"/>
+                <DataGridTextColumn Header="Score" Binding="{Binding Scores}" Width="1*"/>
+            </DataGrid.Columns>
+            <!-- Column Header Style -->
+            <!-- Column Header Style -->
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                    <Setter Property="Background" Value="#FF3B5998"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+            <DataGrid.RowHeaderStyle>
+                <Style TargetType="DataGridRowHeader">
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                    <Setter Property="Background" Value="#FF3B5998"/>
+                </Style>
+            </DataGrid.RowHeaderStyle>
+        </DataGrid>
+        <Label  HorizontalAlignment="Center" Grid.Row="12" Grid.Column="1" Width="Auto" FontSize="35" Content="Personal best score"   FontWeight="Bold"/>
+        <TextBox HorizontalAlignment="Center" Grid.Row="13" Grid.Column="1" Width="Auto" FontSize="25" Text="{Binding PersonalBestScoreGameWithBonus}" IsReadOnly="True" Background="Transparent"/>
+        <Label  HorizontalAlignment="Center" Grid.Row="14" Grid.Column="1" Width="Auto" FontSize="35" Content="Personal average score"   FontWeight="Bold"/>
+        <TextBox HorizontalAlignment="Center" Grid.Row="15" Grid.Column="1" Width="Auto" FontSize="25" Text="{Binding PersonalAverageScoreGameWithBonus}" IsReadOnly="True" Background="Transparent"/>
+
+        <Label  HorizontalAlignment="Center" Grid.Row="16" Grid.Column="1" Width="Auto" FontSize="35" Content="Personal scores " FontWeight="Bold" />
+        <DataGrid x:Name="personalScores" AutoGenerateColumns="False" CanUserAddRows="False" HorizontalAlignment="Center" VerticalAlignment="Top" IsReadOnly="True" CanUserSortColumns="False" Focusable="False" CanUserReorderColumns="False" CanUserResizeColumns="False"  CanUserResizeRows="False" CanUserDeleteRows="False" RowHeight="30" VerticalScrollBarVisibility="Disabled"  FontSize="20" Width="500" Height="120" ItemsSource="{Binding PersonalScoresWithBonus}" Grid.Row="17" Grid.Column="1" LoadingRow="DataGrid_LoadingRow" GridLinesVisibility="Horizontal"  >
+            <DataGrid.Columns>
+                <!-- Username Column -->
+                <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="1*" 
+                           >
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            <Setter Property="Padding" Value="80,0,0,0"/>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+
+                <!-- Score Column -->
+                <DataGridTextColumn Header="Score" Binding="{Binding Scores}" Width="1*" 
+                            >
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+
+            <!-- Column Header Style -->
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                    <Setter Property="Background" Value="#FF3B5998"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+            <DataGrid.RowHeaderStyle>
+                <Style TargetType="DataGridRowHeader">
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                    <Setter Property="Background" Value="#FF3B5998"/>
+                </Style>
+            </DataGrid.RowHeaderStyle>
+        </DataGrid>
+        
+        <!-- ===================================================================================================================================================================================================== -->
+
+
+
+        <Label  HorizontalAlignment="Center" Grid.Row="5" Grid.Column="3" Width="Auto" FontSize="45" Content="GAME WITHOUT BONUS"   FontWeight="Bold"/>
+        <Label  HorizontalAlignment="Center" Grid.Row="6" Grid.Column="3" Width="Auto" FontSize="35" Content="All time best score"   FontWeight="Bold"/>
+        <TextBox HorizontalAlignment="Center" Grid.Row="7" Grid.Column="3" Width="Auto" FontSize="25" Text="{Binding BestScoreGameWithoutBonus}" IsReadOnly="True" Background="Transparent"/>
+
+        <Label  HorizontalAlignment="Center" Grid.Row="8" Grid.Column="3" Width="Auto" FontSize="35" Content="All time average score"   FontWeight="Bold"/>
+        <TextBox HorizontalAlignment="Center" Grid.Row="9" Grid.Column="3" Width="Auto" FontSize="25" Text="{Binding AverageScoreGameWithoutBonus}" IsReadOnly="True"  Background="Transparent"/>
+        
+        <Label  HorizontalAlignment="Center" Grid.Row="10" Grid.Column="3" Width="Auto" FontSize="35" Content="Scores table"   FontWeight="Bold"/>
+        <DataGrid  AutoGenerateColumns="False" CanUserAddRows="False" HorizontalAlignment="Center" VerticalAlignment="Top" CanUserSortColumns="False" CanUserReorderColumns="False" CanUserResizeColumns="False"  CanUserResizeRows="False" CanUserDeleteRows="False" RowHeight="30" VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="20" Width="500" ItemsSource="{Binding AllScoresWithoutBonus}" Grid.Row="11" Grid.Column="3"  LoadingRow="DataGrid_LoadingRow" GridLinesVisibility="Horizontal" IsReadOnly="True" Height="120" >
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="1*" />
+                <DataGridTextColumn Header="Score" Binding="{Binding Scores}" Width="1*"/>
+            </DataGrid.Columns>
+            <!-- Column Header Style -->
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                    <Setter Property="Background" Value="#FF3B5998"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+            <DataGrid.RowHeaderStyle>
+                <Style TargetType="DataGridRowHeader">
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                    <Setter Property="Background" Value="#FF3B5998"/>
+                </Style>
+            </DataGrid.RowHeaderStyle>
+        </DataGrid>
+        <Label  HorizontalAlignment="Center" Grid.Row="12" Grid.Column="3" Width="Auto" FontSize="35" Content="Personal best score"   FontWeight="Bold"/>
+        <TextBox HorizontalAlignment="Center" Grid.Row="13" Grid.Column="3" Width="Auto" FontSize="25" Text="{Binding PersonalBestScoreGameWithoutBonus}" IsReadOnly="True" Background="Transparent"/>
+
+        <Label  HorizontalAlignment="Center" Grid.Row="14" Grid.Column="3" Width="Auto" FontSize="35" Content="Personal average score"   FontWeight="Bold"/>
+        <TextBox HorizontalAlignment="Center" Grid.Row="15" Grid.Column="3" Width="Auto" FontSize="25" Text="{Binding PersonalAverageScoreGameWithoutBonus}" IsReadOnly="True"  Background="Transparent"/>
+
+        <Label  HorizontalAlignment="Center" Grid.Row="16" Grid.Column="3" Width="Auto" FontSize="35" Content="Personal scores" FontWeight="Bold" />
+        <DataGrid AutoGenerateColumns="False" CanUserAddRows="False" HorizontalAlignment="Center" VerticalAlignment="Top" IsReadOnly="True" CanUserSortColumns="False" Focusable="False" CanUserReorderColumns="False" CanUserResizeColumns="False"  CanUserResizeRows="False" CanUserDeleteRows="False" RowHeight="30" VerticalScrollBarVisibility="Disabled"  FontSize="20" Width="500" ItemsSource="{Binding PersonalScoresWithoutBonus}"  Grid.Row="17" Grid.Column="3"  LoadingRow="DataGrid_LoadingRow" GridLinesVisibility="Horizontal" HorizontalContentAlignment="Center" Height="120"  >
+            <DataGrid.Columns>
+                <!-- Username Column -->
+                <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="1*" 
+                           >
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+
+                <!-- Score Column -->
+                <DataGridTextColumn Header="Score" Binding="{Binding Scores}" Width="1*" 
+                            >
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+
+            <!-- Column Header Style -->
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                    <Setter Property="Background" Value="#FF3B5998"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+            <DataGrid.RowHeaderStyle>
+                <Style TargetType="DataGridRowHeader">
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                    <Setter Property="Background" Value="#FF3B5998"/>
+                </Style>
+            </DataGrid.RowHeaderStyle>
+
+
+        </DataGrid>
     </Grid>
 </Window>

@@ -5,6 +5,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using YambApp.Model;
 
 namespace YambApp
 {
@@ -13,5 +14,10 @@ namespace YambApp
     /// </summary>
     public partial class App : Application
     {
+        protected override void OnExit(ExitEventArgs e)
+        {
+            UserSession.Instance.ClearSession();
+            base.OnExit(e);
+        }
     }
 }

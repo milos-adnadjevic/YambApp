@@ -42,7 +42,13 @@ namespace YambApp
             WindowStartupLocation = WindowStartupLocation.CenterScreen;                                                                       
            
         }
+        public MainWindow()
+        {
+            InitializeComponent();
+            DataContext = new MainWindowViewModel(gameWithBonus, scoreGrid);
 
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        }
         private void DataGridCell_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (DataContext is MainWindowViewModel viewModel)

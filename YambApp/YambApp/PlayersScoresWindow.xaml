@@ -9,10 +9,10 @@
         Title="PlayersScoresWindow" Height="450" Width="800">
     <Grid>
 
-        <DataGrid x:Name="playersScores" AutoGenerateColumns="False" CanUserAddRows="False" HorizontalAlignment="Center" IsReadOnly="True" CanUserSortColumns="True" CanUserReorderColumns="False" CanUserResizeColumns="False"  CanUserResizeRows="False" CanUserDeleteRows="False" RowHeight="65" VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="35" Width="800" ItemsSource="{Binding AllPlayers}">
+        <DataGrid x:Name="playersScores" AutoGenerateColumns="False" CanUserAddRows="False" HorizontalAlignment="Center" IsReadOnly="True" CanUserSortColumns="True" CanUserReorderColumns="False" CanUserResizeColumns="False"  CanUserResizeRows="False" CanUserDeleteRows="False" RowHeight="65" VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="35" Width="800" ItemsSource="{Binding AllScores}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Username" Binding="{Binding Name}" Width="1*"/>
-                <DataGridTextColumn Header="Score" Binding="{Binding Score}" Width="1*"/>
+                <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="1*"/>
+                <DataGridTextColumn Header="Score" Binding="{Binding Scores}" Width="1*"/>
             </DataGrid.Columns>
         </DataGrid>
 

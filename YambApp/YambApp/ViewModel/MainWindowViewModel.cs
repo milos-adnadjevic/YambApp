@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,10 +13,13 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using YambApp.Model;
 using YambApp.Repository;
 using YambApp.Service;
+using NAudio.Wave;
+
 
 namespace YambApp.ViewModel
 {
@@ -29,8 +33,9 @@ namespace YambApp.ViewModel
         private static IScore score;
         private static ISumRules sumRules;
         private static IStyleOfBestChoiceAlgorithams styleOfBestChoiceAlgorithams;
-        private static IPlayerService playerService;
+        private static IScoreService scoreService;
         private static IEndOfGameCheck endOfGameCheck;
+        private static INavigationService navigationService;
 
         IDataGridWrapper dataGridWrapper;
         public ObservableCollection<YambCategory> YambCategories { get; set; }
@@ -41,6 +46,8 @@ namespace YambApp.ViewModel
         public ICommand CellClickCommand { get; private set; }
 
         public ICommand GridLoadedCommand { get; set; }
+        public ICommand NavigateToHomeCommand { get; set; }
+        public ICommand LogOutCommand {  get; set; }
 
 
         private bool dice1Holded = false;
@@ -58,6 +65,9 @@ namespace YambApp.ViewModel
        
         private bool gameWithBonus = false;
         private bool validInput = true;
+        private bool onlyLockColum = false;
+
+        private string username;
 
         public DataGrid ScoreGrid { get; set; }
 
@@ -76,10 +86,16 @@ namespace YambApp.ViewModel
 
         private string imageSourceString;
 
-        
+        private readonly Random _random;
+        private readonly DispatcherTimer _rollTimer;
+        private int _finalDiceValue;
+        private int _currentRollingValue;
+
+
         public MainWindowViewModel(bool bonus,DataGrid scoreGrid)
         {
-   
+            username=UserSession.Instance.Username;
+            
             randomDiceGenerator = new RandomDiceGenerator();           
             randomDiceGenerator= new RandomDiceGenerator();
             dataGridWrapper = new DataGridWrapper();
@@ -89,10 +105,13 @@ namespace YambApp.ViewModel
             score = new Score(dataGridWrapper);
            
             styleOfBestChoiceAlgorithams = new StyleOfBestChoiceAlgorithams();
-            playerService= new PlayerService();
+            scoreService= new ScoreService();
             endOfGameCheck= new EndOfGameCheck();
+            navigationService = new NavigationService();
 
             YambCategories = new ObservableCollection<YambCategory>(yambTableGenerator.GetRows());
+
+            
 
             Scores = 0;
 
@@ -107,6 +126,9 @@ namespace YambApp.ViewModel
             HoldDiceCommand = new RelayCommand(HoldDice);
             CellClickCommand = new RelayCommandMouseArg<EventTuple>(ClickCell);
             GridLoadedCommand = new RelayCommand(GridLoaded);
+            NavigateToHomeCommand = new RelayCommand(NavigateToHome);
+            LogOutCommand = new RelayCommand(LogOut);
+
 
             gameWithBonus = bonus;
 
@@ -147,6 +169,7 @@ namespace YambApp.ViewModel
             imageSource[6] = () => imageSourceString = "/YambApp;component/Image/diceSix.png";
 
             turnNo = 1;
+            CurrentRoll = turnNo;
 
             Dices = randomDiceGenerator.RollDices();
             Dice1Value = Dices[0].Value.ToString();
@@ -164,16 +187,37 @@ namespace YambApp.ViewModel
             Dice5Value = Dices[4].Value.ToString();
             imageSource[Dices[4].Value].Invoke();
             FifthDiceImage = imageSourceString;
-            Dice1Background = Brushes.Black;
-            Dice2Background = Brushes.Black;
-            Dice3Background = Brushes.Black;
-            Dice4Background = Brushes.Black;
-            Dice5Background = Brushes.Black;
+            Dice1Background =  Brushes.Black;
+            Dice2Background =  Brushes.Black;
+            Dice3Background =  Brushes.Black;
+            Dice4Background =  Brushes.Black;
+            Dice5Background =  Brushes.Black;
+
+            _random = new Random();
+
+
+            using (var audioFile = new AudioFileReader("Music/diceRolling.mp3"))
+            using (var outputDevice = new WaveOutEvent())
+            {
+                outputDevice.Init(audioFile);
+                outputDevice.Play();
+
+                // Wait until music playback finishes
+                while (outputDevice.PlaybackState == PlaybackState.Playing)
+                {
+                    Task.Delay(100).Wait(); // Prevent tight loop
+                }
+            }
+
+
+
 
         }
 
 
- 
+       
+
+
 
         private string dice1Value;
         public string Dice1Value
@@ -228,8 +272,8 @@ namespace YambApp.ViewModel
 
 
 
-        private SolidColorBrush dice1BackGround;
-        public SolidColorBrush Dice1Background
+        private Brush dice1BackGround;
+        public Brush Dice1Background
         {
             get { return dice1BackGround; }
             set
@@ -240,8 +284,8 @@ namespace YambApp.ViewModel
         }
 
 
-        private SolidColorBrush dice2BackGround;
-        public SolidColorBrush Dice2Background
+        private Brush dice2BackGround;
+        public Brush Dice2Background
         {
             get { return dice2BackGround; }
             set
@@ -252,8 +296,8 @@ namespace YambApp.ViewModel
         }
 
 
-        private SolidColorBrush dice3BackGround;
-        public SolidColorBrush Dice3Background
+        private Brush dice3BackGround;
+        public Brush Dice3Background
         {
             get { return dice3BackGround; }
             set
@@ -264,8 +308,8 @@ namespace YambApp.ViewModel
         }
 
 
-        private SolidColorBrush dice4BackGround;
-        public SolidColorBrush Dice4Background
+        private Brush dice4BackGround;
+        public Brush Dice4Background
         {
             get { return dice4BackGround; }
             set
@@ -276,8 +320,8 @@ namespace YambApp.ViewModel
         }
 
 
-        private SolidColorBrush dice5BackGround;
-        public SolidColorBrush Dice5Background
+        private Brush dice5BackGround;
+        public Brush Dice5Background
         {
             get { return dice5BackGround; }
             set
@@ -354,15 +398,90 @@ namespace YambApp.ViewModel
             }
         }
 
+        private int _currentRoll=0; // Start from the first roll
+        public int CurrentRoll
+        {
+            get => _currentRoll;
+            set
+            {
+                _currentRoll = value;
+                OnPropertyChanged(nameof(CurrentRoll)); // Notify UI of updates
+            }
+        }
+        private string _statusMessage;
+        public string StatusMessage
+        {
+            get => _statusMessage;
+            set
+            {
+                _statusMessage = value;
+                OnPropertyChanged(nameof(StatusMessage));
+            }
+        }
+        private void LogOut(object obj)
+        {
+            UserSession.Instance.ClearSession();
+            navigationService.NavigateTo("Login", Application.Current.Windows.OfType<MainWindow>().FirstOrDefault());
+        }
+        private void NavigateToHome(object obj)
+        {
+            navigationService.NavigateTo("Home", Application.Current.Windows.OfType<MainWindow>().FirstOrDefault());
+            
+        }
 
+        private async Task RollingDiceSimulation()
+        {
+            var musicTask = Task.Run(() =>
+            {
+                using (var audioFile = new AudioFileReader("Music/diceRolling.mp3"))
+                using (var outputDevice = new WaveOutEvent())
+                {
+                    outputDevice.Init(audioFile);
+                    outputDevice.Play();
 
+                    // Wait until music playback finishes
+                    while (outputDevice.PlaybackState == PlaybackState.Playing)
+                    {
+                        Task.Delay(100).Wait(); // Prevent tight loop
+                    }
+                }
+            });
 
+            for (int i = 0; i <= 7; i++)
+            {
+                _currentRollingValue = _random.Next(1, 7);
 
+                // Simulate an asynchronous operation, e.g., delay for visualization
+                await Task.Delay(20); // Wait for 500 milliseconds
 
+                imageSource[_random.Next(1, 7)].Invoke();
+                FirstDiceImage = imageSourceString;
+                imageSource[_random.Next(1, 7)].Invoke();
+                SecondDiceImage = imageSourceString;
+                imageSource[_random.Next(1, 7)].Invoke();
+                ThirdDiceImage = imageSourceString;
+                imageSource[_random.Next(1, 7)].Invoke();
+                FourthDiceImage = imageSourceString;
+                imageSource[_random.Next(1, 7)].Invoke();
+                FifthDiceImage = imageSourceString;
+               
 
-        private void Roll(object obj)
+            }
+
+           
+        }
+
+        private async void Roll(object obj)
         {
             if (endOfGameCheck.EndOfGame(ScoreGrid, indexesValue)) return;
+
+            if (onlyLockColum && !locked && CurrentRoll==1) { StatusMessage = "You must lock field first!"; return; }
+            StatusMessage = null;
+
+            if (CurrentRoll == 3)
+            {
+                StatusMessage = "You have reached the maximum number of rolls!";
+            }
             if (turnNo == 3)
             {
                 dice1Holded = false;
@@ -370,17 +489,23 @@ namespace YambApp.ViewModel
                 dice3Holded = false;
                 dice4Holded = false;
                 dice5Holded = false;
+
                 return;
             }
 
+
+
             ++turnNo;
+            CurrentRoll = turnNo;
+            await RollingDiceSimulation();
             Dices = randomDiceGenerator.RollDices();
 
-            if (!dice1Holded) 
+            if (!dice1Holded)
             {
                 Dice1Value = Dices[0].Value.ToString();
                 imageSource[Dices[0].Value].Invoke();
-                FirstDiceImage = imageSourceString;
+                FirstDiceImage = imageSourceString; 
+
             }
             if (!dice2Holded)
             {
@@ -407,9 +532,10 @@ namespace YambApp.ViewModel
                 FifthDiceImage = imageSourceString;
             }
 
-                if (turnNo > 1)
+            //  this was making a problem when we roll the dice after locking cell
+            if (turnNo > 1 && locked == false)
             {
-            
+
                 foreach (var dic in indexesValue)
                 {
                     foreach (var indexes in dic.Key)
@@ -421,13 +547,23 @@ namespace YambApp.ViewModel
                     }
                 }
 
-               
+
+            }
+
+            freeFieldsIndexes=bestChoiceAlgorithams.AllFreeFields(ScoreGrid, turnNo);
+            onlyLockColum = true;
+            foreach (var dic in freeFieldsIndexes)
+            {
+                if(dic.Value.Any()) onlyLockColum=false;
             }
 
             styleOfBestChoiceAlgorithams.StyleOfFreeFields(ScoreGrid, turnNo, locked, lockedCell, GetDices(), gameWithBonus);
 
-          
+
+        
         }
+        
+        
 
         private void HoldDice(object obj)
         {
@@ -438,23 +574,23 @@ namespace YambApp.ViewModel
             {
                 case 1:
                     dice1Holded = !dice1Holded;
-                    Dice1Background = dice1Holded ? Brushes.SkyBlue : Brushes.Black;                    
+                    Dice1Background = dice1Holded ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF3B5998")) : Brushes.Black;                    
                     break;
                 case 2:
                     dice2Holded = !dice2Holded;
-                    Dice2Background = dice2Holded ? Brushes.SkyBlue : Brushes.Black;
+                    Dice2Background = dice2Holded ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF3B5998")) : Brushes.Black;
                     break;
                 case 3:
                     dice3Holded = !dice3Holded;
-                    Dice3Background = dice3Holded ? Brushes.SkyBlue : Brushes.Black;
+                    Dice3Background = dice3Holded ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF3B5998")) : Brushes.Black;
                     break;
                 case 4:
                     dice4Holded = !dice4Holded;
-                    Dice4Background = dice4Holded ? Brushes.SkyBlue : Brushes.Black;
+                    Dice4Background = dice4Holded ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF3B5998")) : Brushes.Black;
                     break;
                 case 5:
                     dice5Holded = !dice5Holded;
-                    Dice5Background = dice5Holded ? Brushes.SkyBlue : Brushes.Black;
+                    Dice5Background = dice5Holded ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF3B5998")) : Brushes.Black;
                     break;
             }
         }
@@ -597,11 +733,15 @@ namespace YambApp.ViewModel
             Dice3Background = Brushes.Black;
             Dice4Background = Brushes.Black;
             Dice5Background = Brushes.Black;
+
+           
+           
         }
 
-        private void FirstRoleOfTurn()
+        private async void FirstRoleOfTurn()
         {
             //first roll on next turn
+            await RollingDiceSimulation();
             Dices = randomDiceGenerator.RollDices();
             Dice1Value = Dices[0].Value.ToString();
             Dice2Value = Dices[1].Value.ToString();
@@ -619,6 +759,29 @@ namespace YambApp.ViewModel
             imageSource[Dices[4].Value].Invoke();
             FifthDiceImage = imageSourceString;
             turnNo = 1;
+            CurrentRoll = turnNo;
+            StatusMessage = null;
+            freeFieldsIndexes = bestChoiceAlgorithams.AllFreeFields(ScoreGrid, turnNo);
+            onlyLockColum = true;
+            bool breakOuterLoop = false;
+            foreach (var dic in freeFieldsIndexes)
+            {
+                if (dic.Value.Any())
+                {
+                    foreach (var values in dic.Value)
+                    {
+                        if (values != 4)
+                        {
+                            onlyLockColum = false;
+                            breakOuterLoop = true;
+                            break; // Exit the inner loop
+                        }
+                    }
+                    if (breakOuterLoop)
+                        break; // Exit the outer loop
+                }
+
+            }
         }
 
 
@@ -663,7 +826,8 @@ namespace YambApp.ViewModel
             lockedTextBlock.Background = Brushes.DimGray;
             lockedCell = cell;
             locked = true;
-            MessageBox.Show("Cell is locked");
+            CustomMessageBox customMessageBox = new CustomMessageBox("Cell is locked");
+            customMessageBox.ShowDialog();
            
             return;
         }
@@ -675,8 +839,9 @@ namespace YambApp.ViewModel
                 Random random = new Random();
                 int randomNO = random.Next(1,1000000);
                 int scoreValueInt = score.ScoreValue(ScoreGrid);
-                Player player = new Player("Guest"+randomNO, scoreValueInt);
-                playerService.Create(player);
+                int gameType = gameWithBonus ? 1 : 0; 
+                ScoreTable scores = new ScoreTable (username, scoreValueInt, gameType);
+                scoreService.Create(scores);
 
                 PlayersScoresWindow allPLayers = new PlayersScoresWindow();
                 

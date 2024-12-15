@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-C:\Users\Home\Downloads\YambApp\YambApp\obj\Debug\
+D:\FAKS\PRAKSA\YambApp\YambApp\YambApp\obj\Debug\
 YambApp
 none
 false
 DEBUG;TRACE
-C:\Users\Home\Downloads\YambApp\YambApp\App.xaml
-31237371094
+D:\FAKS\PRAKSA\YambApp\YambApp\YambApp\App.xaml
+6-156461611
+1-1578601453
+62-397429081
+161-550222582
+CustomMessageBox.xaml;LoginWindow.xaml;MainWindow.xaml;PlayersScoresWindow.xaml;RegistrationWindow.xaml;StartGameWindow.xaml;
 
-45-1662013786
-1361915272147
-MainWindow.xaml;PlayersScoresWindow.xaml;StartGameWindow.xaml;
-
-False
+True
 

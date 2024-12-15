@@ -11,24 +11,24 @@ namespace YambApp.ViewModel
 {
     public class PlayersScoresViewModel : INotifyPropertyChanged
     {
-        IPlayerService playerService;
+        IScoreService scoreService;
         public PlayersScoresViewModel() 
         {
-            playerService = new PlayerService();
+            scoreService = new ScoreService();
 
-            AllPlayers = playerService.GetAll();
+            AllScores = scoreService.GetAllByType(1);
 
 
         }
 
-        private List<Player> allPlayers;
-        public List<Player> AllPlayers
+        private List<ScoreTable> allScores;
+        public List<ScoreTable> AllScores
         {
-            get { return allPlayers; }
+            get { return allScores; }
             set
             {
-                allPlayers = value;
-                OnPropertyChanged(nameof(AllPlayers));
+                allScores = value;
+                OnPropertyChanged(nameof(AllScores));
             }
         }
 

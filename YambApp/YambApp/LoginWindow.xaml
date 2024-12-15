@@ -1,0 +1,186 @@
+﻿<Window x:Class="YambApp.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:YambApp"
+        mc:Ignorable="d"
+        Title="Yamb, Jamb - game with dices"
+        Icon="Image/diceIcon.png"
+        WindowState="Maximized"
+        WindowStyle="ThreeDBorderWindow"
+        ResizeMode="CanMinimize"
+        WindowStartupLocation="CenterScreen">
+    <Window.Background>
+        <ImageBrush ImageSource="Image/dicesBackground.jpg" Stretch="UniformToFill" />
+    </Window.Background>
+
+    <!-- Centering the form -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Form Container with Border -->
+        <Border Grid.Row="1" Grid.Column="1" Width="300" Background="#80000000" CornerRadius="10" Padding="20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Username/Email Field -->
+                <TextBlock Text="Username/Email" Grid.Row="0" Foreground="White" Margin="0,5" />
+                <TextBox Text="{Binding UsernameOrEmail, UpdateSourceTrigger=PropertyChanged}" 
+                         Grid.Row="1" Margin="0,5" Height="30" VerticalContentAlignment="Center" />
+
+                <!-- Password Field -->
+                <TextBlock Text="Password" Grid.Row="2" Foreground="White" Margin="0,15,0,5" />
+                <Grid Grid.Row="3" Margin="0,5" Height="30">
+                    <!-- Border for styling -->
+
+                    <Grid>
+                        <!-- Toggleable Password Visibility -->
+                        <TextBox x:Name="PasswordTextBox" 
+                     VerticalContentAlignment="Center" 
+                     Visibility="Collapsed" 
+                     Text="{Binding ElementName=PasswordBox, Path=Password, Mode=TwoWay}" />
+
+                        <PasswordBox x:Name="PasswordBox" 
+                         VerticalContentAlignment="Center" 
+                         PasswordChanged="PasswordBox_PasswordChanged" />
+
+                        <!-- Eye Button -->
+                        <Button x:Name="TogglePasswordVisibility" 
+                                    Width="30" 
+                                    Height="30" 
+                                    HorizontalAlignment="Right" 
+                                    VerticalAlignment="Center" 
+                                    Background="Transparent" 
+                                    BorderBrush="Transparent" 
+                                    Cursor="Hand"
+                                    Click="TogglePasswordVisibility_Click"
+                                    Focusable="False"
+                                    IsTabStop="False">
+                            <Button.FocusVisualStyle>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </Style>
+                            </Button.FocusVisualStyle>
+                            <Grid>
+                                <!-- Default Eye Icon -->
+                                <Canvas x:Name="EyeIcon" Width="16" Height="16"  >
+
+                                    <!-- Outer Eye Shape -->
+                                    <Path Data="M1,8 C3,4 8,2 12,8 C8,14 3,12 1,8 Z" 
+                                              Fill="Gray" />
+
+                                    <!-- White Circle for Eye (Sclera) -->
+                                    <Ellipse Width="5" Height="5" Fill="White" Canvas.Left="4" Canvas.Top="5.5" />
+
+                                    <!-- Eye Pupil -->
+                                    <Ellipse Width="2.5" Height="2.5" Fill="Gray" Canvas.Left="5.2" Canvas.Top="6.7" />
+
+
+                                </Canvas>
+
+                                <!-- Eye-Slash Icon (Initially Hidden) -->
+                                <Canvas x:Name="EyeSlashIcon" Width="16" Height="16" Visibility="Collapsed">
+                                    <!-- Slash Line -->
+                                    <Path Data="M1,1 L13,15" Stroke="Gray" StrokeThickness="2" />
+
+                                    <!-- Outer Eye Shape -->
+                                    <Path Data="M1,8 C3,4 8,2 12,8 C8,14 3,12 1,8 Z" 
+                                              Fill="Gray" Opacity="0.5" />
+
+                                    <!-- White Circle for Eye (Sclera) -->
+                                    <Ellipse Width="5" Height="5" Fill="White" Canvas.Left="4" Canvas.Top="5.5" />
+
+                                    <!-- Eye Pupil -->
+                                    <Ellipse Width="2.5" Height="2.5" Fill="Gray" Canvas.Left="5.2" Canvas.Top="6.7" />
+                                </Canvas>
+
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </Grid>
+
+                <TextBlock Text="{Binding StatusMessage}" 
+                           Grid.Row="4" Foreground="Red" Margin="0,10" TextAlignment="Left"/>
+
+
+                <!-- Sign Up Link -->
+                <TextBlock Grid.Row="5" HorizontalAlignment="Center" Margin="0,10">
+                    <Run Text="Don't have an account? " Foreground="White"/>
+                    <Hyperlink Click="NavigateToRegistration">
+                        <Run Text="Sign up" Foreground="LightBlue" />
+                    </Hyperlink>
+                </TextBlock>
+
+                <!-- Login Button -->
+                <Button Content="LOGIN" 
+                        Grid.Row="6" 
+                        Height="40"
+                        Width="80"
+                        Background="#FF3B5998" 
+                        Foreground="White" 
+                        FontWeight="Bold"
+                        Command="{Binding LoginCommand}"
+                        IsEnabled="{Binding CanExecuteButton}"
+                        Cursor="Hand"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Padding="10">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Control.Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" x:Name="border" 
+                                                CornerRadius="10" 
+                                                BorderBrush="Transparent" 
+                                                BorderThickness="0">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <!-- Hover Effect -->
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="#FF4D6BAB" />
+                                            </Trigger>
+                                            <!-- Pressed Effect -->
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="#FF2A4477" />
+                                                <Setter TargetName="border" Property="RenderTransform">
+                                                    <Setter.Value>
+                                                        <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                            <!-- Disabled Effect -->
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter TargetName="border" Property="Background" Value="Gray" />
+                                                <Setter TargetName="border" Property="Opacity" Value="0.7" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
